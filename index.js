@@ -67,6 +67,8 @@ client.connect((err, ct) => {
     let db = ct.db("osucounter");
     let users = db.collection("users");
     vk_1.default.updates.on('message_new', async (message, next) => {
+        if (message.senderId < 0)
+            return;
         message.user = await users.findOne({ id: message.senderId });
         if (!message.user) {
             await users.insertOne({
