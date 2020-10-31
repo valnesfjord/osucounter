@@ -230,9 +230,9 @@ client.connect((err, ct) => {
             return message.send(`к вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`);
         let req = await prequest_1.default(`https://ameobea.me/osutrack/api/get_user.php?mode=${message.user.osu.user.mode}&user=${encodeURIComponent(message.user.osu.user.nickname)}`);
         if (!req)
-            return message.send(`Пользователь ${message.args[1]} не найден!`);
+            return message.send(`Пользователь ${message.user.osu.user.mode} не найден!`);
         if (req.exists && req.exists === "false")
-            return message.send(`Пользователь ${message.args[1]} не найден в базе. (Возможно указан другой мод)`);
+            return message.send(`Пользователь ${message.user.osu.user.mode} не найден в базе. (Возможно указан другой мод)`);
         return message.send(`💻 ID: ${req.user}\n💡 Находится на #${req.pp_rank}\n📍 Всего PP: ${Number(req.pp_raw).toFixed(2)}\n🏹 Аккуратность: ${Number(req.accuracy).toFixed(2)}%\n📘 Всего x300: ${req.count300}\n📗 Всего x100: ${req.count100}\n📙 Всего x50: ${req.count50}\n✨ Уровень: ${Number(req.level).toFixed(2)}/100\n🎸 Количество игр: ${req.playcount}`);
     });
     const modes = {
@@ -302,9 +302,9 @@ client.connect((err, ct) => {
             return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать *ник*`);
         let req = await prequest_1.default(`https://ameobea.me/osutrack/api/get_changes.php?mode=${message.user.osu.user.mode}&user=${encodeURIComponent(message.user.osu.user.nickname)}`);
         if (!req)
-            return message.send(`Пользователь ${message.args[1]} не найден!`);
+            return message.send(`Пользователь ${message.user.osu.user.mode} не найден!`);
         if (req.exists && req.exists === "false")
-            return message.send(`Пользователь ${message.args[1]} не найден в базе. (Возможно указан другой мод)`);
+            return message.send(`Пользователь ${message.user.osu.user.mode} не найден в базе. (Возможно указан другой мод)`);
         let text = ``;
         if (req.playcount === 0 && req.total_score === 0)
             return message.send(`На аккаунте ${message.user.osu.user.nickname} не произошло никаких изменений!`);
@@ -337,18 +337,19 @@ client.connect((err, ct) => {
         req.pp_rank = Number(req.pp_rank) - (Number(req.pp_rank) * 2);
         return message.send(`На аккаунте произошли некоторые изменения: \n💽 Количество игр: +${req.playcount}\n🖥 Ранг: ${req.pp_rank}\n✨ PP: ${Number(req.pp_raw).toFixed(2)}\n📍 Аккуратность: ${Number(req.accuracy).toFixed(2)}\n\n${text}`);
     });
-    hearManager.hear(/^(?:отвязать|удалить)$/ig, async (message) => {
+    hearManager.hear(/^(?:отвязать|удалить)$/i, async (message) => {
         message.args = message.$match;
         if (!message.user.osu)
             return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`);
         await users.updateOne({ id: message.user.id }, { $set: { osu: null } });
         return message.send(`От вашего профиля был отвязан аккаунт: ${message.user.osu.user}`);
     });
-    hearManager.hear(/^(?:мод)\s([0-9]+)$/ig, async (message) => {
+    hearManager.hear(/^(?:мод)\s([0-9]+)$/i, async (message) => {
         message.args = message.$match;
         if (!message.user.osu)
             return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`);
         let mode = `Standart`;
+        console.log(message.args);
         if (!Number(message.args[1]))
             return;
         if (Number(message.args[1]) > 4)
