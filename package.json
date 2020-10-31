@@ -12,6 +12,8 @@
   "dependencies": {
     "@vk-io/hear": "^1.0.2",
     "mongodb": "^3.6.2",
+    "prequest": "^1.0.0",
+    "ts-node": "^8.10.2",
     "typescript": "^4.0.3",
     "vk-io": "^4.0.3"
   },
