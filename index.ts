@@ -214,11 +214,12 @@ return next();
 });
     hearManager.hear(/^(?:профиль)$/i, async (message) => {
     message.args = message.$match;
-    if(!message.user.osu) return message.send(`к вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`)
-    let req = await prequest(`https://ameobea.me/osutrack/api/get_user.php?mode=${message.user.osu.user.mode}&user=${encodeURIComponent(message.user.osu.user.nickname)}`);
-    if(!req) return message.send(`Пользователь ${message.user.osu.user.mode} не найден!`);
-    if(req.exists && req.exists === "false") return message.send(`Пользователь ${message.user.osu.user.mode} не найден в базе. (Возможно указан другой мод)`);
-    return message.send(`💻 ID: ${req.user}\n💡 Находится на #${req.pp_rank}\n📍 Всего PP: ${Number(req.pp_raw).toFixed(2)}\n🏹 Аккуратность: ${Number(req.accuracy).toFixed(2)}%\n📘 Всего x300: ${req.count300}\n📗 Всего x100: ${req.count100}\n📙 Всего x50: ${req.count50}\n✨ Уровень: ${Number(req.level).toFixed(2)}/100\n🎸 Количество игр: ${req.playcount}`)
+    if(!message.user.osu) return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`)
+    let req = await prequest(`https://osu.ppy.sh/api/get_user?k=e134658997767422c065df097a28a03362abd99f&u=${encodeURIComponent(message.user.osu.user.nickname)}&m=${message.user.osu.user.mode}`);
+    req = req[0];
+    if(!req) return message.send(`Пользователь ${message.user.osu.user.nickname} не найден! (Возможно указан другой мод)`);
+    if(req.playcount && req.playcount === null) return message.send(`Пользователь ${message.user.osu.user.nickname} не найден в базе. (Возможно указан другой мод)`);
+    return message.send(`✏ Ник: ${req.username}\n💻 ID: ${req.user_id}\n🌍 Страна: ${req.country}\n💡 Находится на #${req.pp_rank} по миру и на #${req.pp_country_rank} по стране\n📍 Всего PP: ${Number(req.pp_raw).toFixed(2)}\n🏹 Аккуратность: ${Number(req.accuracy).toFixed(2)}%\n📘 Всего x300: ${req.count300}\n📗 Всего x100: ${req.count100}\n📙 Всего x50: ${req.count50}\n✨ Уровень: ${Number(req.level).toFixed(2)}/100\n🎸 Количество игр: ${req.playcount}\n🐈 Играет с: ${req.join_date}\n🧭 Времени в игре: ${(Math.ceil(Number(req.total_seconds_played)/60/60) === 0) ? `` : ` ${Math.floor(Number(req.total_seconds_played)/60/60)}ч`} ${(Math.ceil(Number(req.total_seconds_played)/60/60) === 0) ? ` ${Math.floor(Number(req.total_seconds_played)/60)}м` : ``}`)
 });
     const modes = {
         'NoMod': 0,
@@ -261,7 +262,7 @@ const modeInfo = (number) => {
 }
     hearManager.hear(/^(?:обновления|обнови|новое)$/i, async (message) => {
     message.args = message.$match;
-    if(!message.user.osu) return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать *ник*`)
+    if(!message.user.osu) return message.send(`К вашему профилю не привязан аккаунт в OSU! Привяжите с помощью команды: Привязать`)
     let req = await prequest(`https://ameobea.me/osutrack/api/get_changes.php?mode=${message.user.osu.user.mode}&user=${encodeURIComponent(message.user.osu.user.nickname)}`);
     if(!req) return message.send(`Пользователь ${message.user.osu.user.mode} не найден!`);
     if(req.exists && req.exists === "false") return message.send(`Пользователь ${message.user.osu.user.mode} не найден в базе. (Возможно указан другой мод)`);
@@ -271,7 +272,7 @@ const modeInfo = (number) => {
     if(req.newhs.length > 0) {
         await Promise.all(req.newhs.map(async (item) => {
             let rq = await prequest(`https://osu.ppy.sh/api/get_beatmaps?k=e134658997767422c065df097a28a03362abd99f&b=${item.beatmap_id}`);
-            if(rq.length === 0) text += `🎇 Карта: Не найдено`;
+            if(rq.length === 0) text += `🎇 Карта: Не найдено\n`;
             if(rq.length > 0) {
                 let map = rq[0];
                 let state = map.approved;
@@ -315,6 +316,33 @@ const modeInfo = (number) => {
         await users.updateOne({id: message.user.id}, {$set: {[`osu.user.mode`]: message.args[1]}});
 
         return message.send(`Вы успешно установили мод игры на ${mode}`);
+    });
+    hearManager.hear(/^(?:последний|посл|rs|recent)$/i, async (message) => {
+        message.args = message.$match;
+        let req = await prequest(`https://osu.ppy.sh/api/get_user_recent?k=e134658997767422c065df097a28a03362abd99f&u=${encodeURIComponent(message.user.osu.user.nickname)}&m=${message.user.osu.user.mode}`);
+        if(req.length === 0) return message.send(`Последних игр пользователя ${message.user.osu.user.nickname} за 24 не найдено`);
+
+        let item = req[0];
+        let rq = await prequest(`https://osu.ppy.sh/api/get_beatmaps?k=e134658997767422c065df097a28a03362abd99f&b=${item.beatmap_id}`);
+        let text = ``;
+        if(rq.length === 0) text += `🎇 Карта: Не найдено (?)\n`;
+        if(rq.length > 0) {
+            let map = rq[0];
+            let state = map.approved;
+            state = state.replace(/-2/, "Заброшенная (Graveyard)")
+            state = state.replace(/-1/, "В разработке (WIP)")
+            state = state.replace(/0/, "Ожидающая (Pending)")
+            state = state.replace(/1/, "Рейтинговая (Ranked)")
+            state = state.replace(/2/, "Одобренная (Approved)")
+            state = state.replace(/3/, "Квалифицированная (Qualified)")
+            state = state.replace(/4/, "Любимая (Loved)")
+            text += `🎇 Карта: [${state}] ${map.artist} - ${map.title} ${Number(map.difficultyrating).toFixed(2)} star ${map.version} (by ${map.creator})\n`
+        }
+        text += `🏹 Аккуратность: ${item.rank} ранг | x300: ${item.count300} | x100: ${item.count100} | x50: ${item.count50} | ❌ ${item.countmiss}\n`;
+        text += `💡 Включенные моды: ${modeInfo(item.enabled_mods)}\n`;
+        text += `🛎 Комбо: x${item.maxcombo} | Очков: ${item.score}\n`;
+        text += `⏱ Дата: x${item.date}\n\n`;
+        return message.send(`Информация о самой последней игре:\n\n${text}`)
     });
     hearManager.hear(/^(?:~e)\s([^]+)$/i, async (message) => {
         message.args = message.$match;
