@@ -373,7 +373,7 @@ client.connect((err, ct) => {
         message.args = message.$match;
         let req = await prequest_1.default(`https://osu.ppy.sh/api/get_user_recent?k=e134658997767422c065df097a28a03362abd99f&u=${encodeURIComponent(message.user.osu.user.nickname)}&m=${message.user.osu.user.mode}`);
         if (req.length === 0)
-            return message.send(`Последних игр пользователя ${message.user.osu.user.nickname} за 24 не найдено`);
+            return message.send(`Игр пользователя ${message.user.osu.user.nickname} за последние 24 часа не найдено`);
         let item = req[0];
         let rq = await prequest_1.default(`https://osu.ppy.sh/api/get_beatmaps?k=e134658997767422c065df097a28a03362abd99f&b=${item.beatmap_id}`);
         let text = ``;
