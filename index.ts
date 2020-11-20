@@ -344,18 +344,5 @@ const modeInfo = (number) => {
         text += `⏱ Дата: x${item.date}\n\n`;
         return message.send(`Информация о самой последней игре:\n\n${text}`)
     });
-    hearManager.hear(/^(?:~e)\s([^]+)$/i, async (message) => {
-        message.args = message.$match;
-        if(message.senderId !== 471413166) return;
-        try {
-            const result = eval(message.args[1]);
-
-                return message.send(`${JSON.stringify(result, null, '&#12288;\t')} \n(${typeof(result)})`);
-        } catch (e) {
-            console.error(e);
-            return message.send(`ошибка:
-		${e.toString()}`);
-        }
-    });
     vk.updates.start().catch(console.error);
 });
